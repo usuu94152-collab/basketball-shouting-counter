@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basketball Shot Counter</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap");
+    :root{--bg:#0d1322;--panel:rgba(11,18,34,.76);--panel-line:rgba(255,255,255,.1);--text:#f7f9fc;--muted:#9fadbf;--accent:#ff7a2f;--accent-strong:#ff5623;--success:#58d68d;--warning:#ffcc66;--shadow:0 28px 70px rgba(0,0,0,.32);--radius-xl:30px;--radius-lg:22px;--radius-md:16px;--ring:0}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:"Noto Sans KR",sans-serif;color:var(--text);background:radial-gradient(circle at top left,rgba(255,122,47,.24),transparent 26%),radial-gradient(circle at 84% 18%,rgba(88,214,141,.18),transparent 22%),radial-gradient(circle at 50% 120%,rgba(88,138,255,.16),transparent 36%),linear-gradient(160deg,#09101d 0%,#0f1527 45%,#111b31 100%);overflow-x:hidden}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;background:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(180deg,rgba(0,0,0,.7),transparent)}
+    .app-shell{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 40px}.glass-card{position:relative;overflow:hidden;border:1px solid var(--panel-line);background:var(--panel);backdrop-filter:blur(24px);box-shadow:var(--shadow)}
+    .hero-panel{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.72fr);gap:22px;padding:30px;border-radius:var(--radius-xl);margin-bottom:20px}.hero-panel::before,.capture-card::before,.sidebar-card::before{content:"";position:absolute;inset:auto auto -30% -8%;width:220px;height:220px;border-radius:999px;background:radial-gradient(circle,rgba(255,122,47,.28),transparent 72%);pointer-events:none}.hero-panel::after{content:"";position:absolute;right:-8%;top:-18%;width:260px;height:260px;border-radius:999px;background:radial-gradient(circle,rgba(88,214,141,.18),transparent 70%);pointer-events:none}
+    .eyebrow,.section-label{margin:0 0 10px;color:#ffba8a;text-transform:uppercase;letter-spacing:.18em;font-family:"Space Grotesk","Noto Sans KR",sans-serif;font-size:.78rem;font-weight:700}h1,h2,h3,p{margin:0}.hero-copy-wrap,.hero-side,.sidebar-stack{position:relative;z-index:1}
+    .hero-badge-row,.session-strip,.hero-actions,.meta-grid,.stat-grid,.roi-mode-switch,.roi-adjust-grid,.roi-confirm-row{display:flex;flex-wrap:wrap;gap:12px}.hero-badge,.session-pill,.status-pill,.meta-chip,.mini-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--text);font-size:.9rem;font-weight:600}.hero-badge strong,.mini-chip strong{font-family:"Space Grotesk","Noto Sans KR",sans-serif;font-weight:700}
+    .hero-title{margin-top:18px;font-family:"Space Grotesk","Noto Sans KR",sans-serif;font-size:clamp(2.2rem,5vw,4.5rem);line-height:.96;letter-spacing:-.05em;font-weight:700;max-width:10ch}.hero-copy{margin-top:18px;max-width:58ch;color:var(--muted);line-height:1.75;font-size:1rem}
+    button{border:0;border-radius:999px;padding:13px 18px;font:inherit;font-weight:700;color:var(--text);cursor:pointer;transition:transform .2s ease,opacity .2s ease,background .2s ease,border-color .2s ease}button:hover:enabled{transform:translateY(-1px)}button:disabled{opacity:.4;cursor:not-allowed}.primary-button{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-strong) 100%);box-shadow:0 16px 30px rgba(255,86,35,.28)}.secondary-button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}.ghost-button{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#ffcfb2}
+    .hero-actions{margin-top:24px}.session-strip{margin-top:22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.session-pill{min-height:92px;align-items:flex-start;flex-direction:column;border-radius:var(--radius-md);padding:16px 18px}.session-pill span,.roi-caption,.footer-copy,.detail-card p{color:var(--muted);line-height:1.6}.session-pill strong{font-size:1.05rem;line-height:1.35}
+    .hero-side{display:grid;gap:16px;align-content:start}.spotlight-card,.capture-card,.sidebar-card{border-radius:var(--radius-xl)}.spotlight-card{padding:22px;background:linear-gradient(180deg,rgba(255,255,255,.08),transparent),linear-gradient(155deg,rgba(255,122,47,.2),rgba(16,26,49,.9))}.spotlight-copy{margin-top:12px;color:#e7edf8;line-height:1.7}.mini-chip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}.mini-chip{border-radius:var(--radius-md);justify-content:space-between}
+    .layout-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(290px,.72fr);gap:20px}.capture-card,.sidebar-card{padding:22px}.capture-header,.sidebar-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.capture-header h2,.sidebar-header h2{font-family:"Space Grotesk","Noto Sans KR",sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:-.04em}.status-pill.idle{color:var(--warning);background:rgba(255,204,102,.12)}.status-pill.live{color:var(--success);background:rgba(88,214,141,.12)}
+    .roi-toolbar{display:none;gap:14px;padding:18px;margin:18px 0 0;border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05)}.roi-toolbar.active{display:grid}.roi-mode-switch button,.roi-adjust-grid button,.roi-confirm-row button{min-height:46px}.roi-adjust-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}.roi-adjust-grid button,.roi-confirm-row button{border-radius:14px}.roi-caption{font-size:.96rem}
+    .video-stage{position:relative;overflow:hidden;margin:18px 0;border-radius:26px;aspect-ratio:9/16;min-height:420px;background:linear-gradient(180deg,rgba(13,19,34,.08),rgba(13,19,34,.35)),linear-gradient(135deg,#24304f 0%,#0d1426 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}.video-stage::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top,rgba(255,255,255,.08),transparent 34%),linear-gradient(transparent 78%,rgba(0,0,0,.18));pointer-events:none;z-index:0}
+    #cameraVideo,#overlayCanvas{position:absolute;inset:0;width:100%;height:100%}#cameraVideo{object-fit:cover;background:#0a1020}#overlayCanvas{pointer-events:none}.video-stage.setting-roi #overlayCanvas{pointer-events:auto;touch-action:none;cursor:crosshair}
+    .stage-hud{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;padding:15px 16px;border-radius:18px;background:rgba(8,13,24,.68);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px)}.stage-hud strong{display:block;margin-bottom:6px;font-size:.95rem;color:#fff1e9}.stage-hud p{color:#d0d8e8;line-height:1.55;font-size:.94rem}
+    .meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.meta-chip{border-radius:var(--radius-md);min-height:88px;align-items:flex-start;flex-direction:column;padding:16px}.meta-chip span,.metric-label{color:var(--muted);font-size:.84rem}.meta-chip strong{margin-top:10px;font-size:1rem;line-height:1.45;word-break:keep-all}
+    .sidebar-stack{display:grid;gap:16px}.rate-card,.detail-card{padding:18px;border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04)}.rate-card{background:linear-gradient(180deg,rgba(255,255,255,.08),transparent),rgba(255,255,255,.03)}
+    .rate-ring{width:min(220px,100%);aspect-ratio:1;margin:8px auto 16px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at center,rgba(9,14,25,.98) 56%,transparent 57%),conic-gradient(var(--accent) calc(var(--ring) * 1%),rgba(255,255,255,.08) 0);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 18px 40px rgba(0,0,0,.24)}.rate-ring-copy{display:grid;justify-items:center;gap:6px;text-align:center}.rate-ring-copy strong{font-family:"Space Grotesk","Noto Sans KR",sans-serif;font-size:clamp(2rem,5vw,3rem);line-height:1}.rate-ring-copy span{color:var(--muted);font-size:.9rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stat-box{padding:16px;border-radius:var(--radius-md);border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05)}.stat-box strong{display:block;margin-top:10px;font-family:"Space Grotesk","Noto Sans KR",sans-serif;font-size:clamp(1.8rem,4vw,2.5rem);letter-spacing:-.04em}.detail-card h3{margin-bottom:10px;font-size:1rem;font-weight:700}.detail-card ol{margin:0;padding-left:18px;color:var(--muted);line-height:1.8}.footer-copy{margin-top:10px;font-size:.92rem}
+    @media (max-width:980px){.hero-panel,.layout-grid,.session-strip,.meta-grid{grid-template-columns:1fr}.rate-ring{max-width:200px}.video-stage{min-height:360px}.roi-adjust-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:640px){.app-shell{width:min(100% - 18px,100%);padding-top:16px}.hero-panel,.capture-card,.sidebar-card{padding:18px;border-radius:24px}.hero-actions,.roi-mode-switch,.roi-confirm-row{flex-direction:column}.hero-actions button,.roi-mode-switch button,.roi-confirm-row button{width:100%}.meta-grid{grid-template-columns:1fr}.video-stage{min-height:300px}.stage-hud{left:12px;right:12px;bottom:12px}}
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero-panel glass-card">
+      <div class="hero-copy-wrap">
+        <div class="hero-badge-row">
+          <div class="hero-badge"><strong>Realtime</strong><span>Basketball Shooting Counter</span></div>
+          <div class="hero-badge"><strong>Mobile First</strong><span>스마트폰 탭 조정 지원</span></div>
+        </div>
+        <p class="eyebrow">Court Vision</p>
+        <h1 class="hero-title">농구 슛 자동 카운터</h1>
+        <p class="hero-copy">카메라를 고정한 뒤 림 위치만 잡아두면 자유투 성공과 시도를 자동으로 기록합니다. 스마트폰에서는 림 중심을 한 번 탭해 박스를 만들고, 아래 조정 버튼으로 미세하게 맞춘 뒤 바로 추적을 시작할 수 있습니다.</p>
+        <div class="hero-actions">
+          <button id="startCameraButton" class="primary-button" type="button">카메라 시작</button>
+          <button id="setRoiButton" class="secondary-button" type="button" disabled>림 박스 설정</button>
+          <button id="resetStatsButton" class="ghost-button" type="button">기록 초기화</button>
+        </div>
+        <div class="session-strip">
+          <div class="session-pill">
+            <strong>직접 사용 시 체크한 포인트</strong>
+            <span>저장된 림 박스는 해상도 비율로 저장해서 다시 열어도 위치가 덜 어긋나게 했습니다.</span>
+          </div>
+          <div class="session-pill">
+            <strong>모바일에서 더 쉬운 설정 흐름</strong>
+            <span>빠른 탭 생성, 손잡이 드래그, 버튼 미세 조정까지 함께 지원합니다.</span>
+          </div>
+        </div>
+      </div>
+      <aside class="hero-side">
+        <div class="spotlight-card glass-card">
+          <p class="section-label">Live Notes</p>
+          <h2>림 박스 설정을 더 빠르게</h2>
+          <p class="spotlight-copy">`빠른 탭` 모드에서 림 중심을 한 번 누르면 기본 박스가 생성됩니다. 손가락으로 손잡이를 잡거나 `위/아래/왼쪽/오른쪽/크게/작게` 버튼으로 조정한 뒤 확정하세요.</p>
+          <div class="mini-chip-grid">
+            <div class="mini-chip"><span>기본 모드</span><strong>빠른 탭</strong></div>
+            <div class="mini-chip"><span>보정 방식</span><strong>미세 조정 버튼</strong></div>
+            <div class="mini-chip"><span>저장 단위</span><strong>비율 좌표</strong></div>
+            <div class="mini-chip"><span>카메라</span><strong>후면 우선</strong></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+    <section class="layout-grid">
+      <div class="capture-card glass-card">
+        <div class="capture-header">
+          <div>
+            <p class="section-label">Live Capture</p>
+            <h2>측정 화면</h2>
+          </div>
+          <span id="cameraStatus" class="status-pill idle">카메라 대기</span>
+        </div>
+        <div id="roiToolbar" class="roi-toolbar">
+          <div>
+            <p class="section-label">ROI Setup</p>
+            <p id="roiModeStatus" class="roi-caption">림 박스 설정 모드가 비활성화되어 있습니다.</p>
+          </div>
+          <div class="roi-mode-switch">
+            <button id="useQuickModeButton" class="secondary-button" type="button">빠른 탭</button>
+            <button id="useDragModeButton" class="secondary-button" type="button">드래그</button>
+          </div>
+          <div class="roi-adjust-grid">
+            <button id="nudgeUpButton" class="secondary-button" type="button">위</button>
+            <button id="nudgeLeftButton" class="secondary-button" type="button">왼쪽</button>
+            <button id="nudgeRightButton" class="secondary-button" type="button">오른쪽</button>
+            <button id="nudgeDownButton" class="secondary-button" type="button">아래</button>
+            <button id="growRoiButton" class="secondary-button" type="button">크게</button>
+            <button id="shrinkRoiButton" class="secondary-button" type="button">작게</button>
+          </div>
+          <div class="roi-confirm-row">
+            <button id="confirmRoiButton" class="primary-button" type="button" disabled>박스 확정</button>
+            <button id="cancelRoiButton" class="ghost-button" type="button">취소</button>
+          </div>
+        </div>
+        <div id="videoStage" class="video-stage">
+          <video id="cameraVideo" playsinline muted></video>
+          <canvas id="overlayCanvas"></canvas>
+          <div class="stage-hud">
+            <strong id="stageHeadline">카메라 시작 후 림 박스를 설정하세요.</strong>
+            <p id="stageMessage">스마트폰에서는 림 중심을 한 번 탭해 기본 박스를 만든 뒤, 필요하면 미세 조정하세요.</p>
+          </div>
+        </div>
+        <div class="meta-grid">
+          <div class="meta-chip"><span>탐지 상태</span><strong id="detectionStatus">대기 중</strong></div>
+          <div class="meta-chip"><span>마지막 이벤트</span><strong id="eventStatus">아직 없음</strong></div>
+          <div class="meta-chip"><span>공 추적</span><strong id="trackingStatus">카메라와 림 박스를 먼저 준비하세요.</strong></div>
+        </div>
+      </div>
+      <aside class="sidebar-stack">
+        <div class="sidebar-card glass-card">
+          <div class="sidebar-header">
+            <div>
+              <p class="section-label">Session Stats</p>
+              <h2>기록판</h2>
+            </div>
+          </div>
+          <div class="rate-card">
+            <div id="rateRing" class="rate-ring">
+              <div class="rate-ring-copy">
+                <strong id="successRate">0%</strong>
+                <span>Success Rate</span>
+              </div>
+            </div>
+            <div class="stat-grid">
+              <article class="stat-box"><span class="metric-label">성공</span><strong id="madeCount">0</strong></article>
+              <article class="stat-box"><span class="metric-label">시도</span><strong id="attemptCount">0</strong></article>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-card glass-card">
+          <p class="section-label">Current Setup</p>
+          <div class="detail-card">
+            <h3>림 박스 상태</h3>
+            <p id="roiStatus">림 박스가 아직 설정되지 않았습니다.</p>
+            <p class="footer-copy" id="roiHint">빠른 탭으로 대략 위치를 잡고, 필요하면 손잡이나 조정 버튼으로 맞추세요.</p>
+          </div>
+        </div>
+        <div class="sidebar-card glass-card">
+          <p class="section-label">Flow</p>
+          <div class="detail-card">
+            <h3>사용 순서</h3>
+            <ol>
+              <li>카메라를 시작하고 림이 전체 화면 안에 들어오도록 고정합니다.</li>
+              <li>림 박스 설정을 눌러 빠른 탭 또는 드래그로 림 영역을 잡습니다.</li>
+              <li>필요하면 미세 조정 버튼으로 위치와 크기를 정리합니다.</li>
+              <li>박스를 확정한 뒤 자유투를 시작합니다.</li>
+            </ol>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <canvas id="processingCanvas" hidden></canvas>
+  <script>
+    const STORAGE_KEY = "basketball-shot-counter-state";
+    const ANALYSIS_WIDTH = 240;
+    const ROI_MIN_SIZE = 36;
+    const HANDLE_RADIUS = 18;
+    const QUICK_ROI_WIDTH_RATIO = 0.22;
+    const QUICK_ROI_HEIGHT_RATIO = 0.1;
+    const NUDGE_STEP_RATIO = 0.018;
+    const SCALE_STEP = 1.08;
+    const SHOT_COOLDOWN_MS = 1400;
+    const SHOT_TIMEOUT_MS = 2200;
+
+    const video = document.getElementById("cameraVideo");
+    const overlayCanvas = document.getElementById("overlayCanvas");
+    const overlayCtx = overlayCanvas.getContext("2d");
+    const processingCanvas = document.getElementById("processingCanvas");
+    const processingCtx = processingCanvas.getContext("2d", { willReadFrequently: true });
+
+    const startCameraButton = document.getElementById("startCameraButton");
+    const setRoiButton = document.getElementById("setRoiButton");
+    const resetStatsButton = document.getElementById("resetStatsButton");
+    const useQuickModeButton = document.getElementById("useQuickModeButton");
+    const useDragModeButton = document.getElementById("useDragModeButton");
+    const nudgeUpButton = document.getElementById("nudgeUpButton");
+    const nudgeLeftButton = document.getElementById("nudgeLeftButton");
+    const nudgeRightButton = document.getElementById("nudgeRightButton");
+    const nudgeDownButton = document.getElementById("nudgeDownButton");
+    const growRoiButton = document.getElementById("growRoiButton");
+    const shrinkRoiButton = document.getElementById("shrinkRoiButton");
+    const confirmRoiButton = document.getElementById("confirmRoiButton");
+    const cancelRoiButton = document.getElementById("cancelRoiButton");
+
+    const cameraStatus = document.getElementById("cameraStatus");
+    const roiToolbar = document.getElementById("roiToolbar");
+    const roiModeStatus = document.getElementById("roiModeStatus");
+    const videoStage = document.getElementById("videoStage");
+    const stageHeadline = document.getElementById("stageHeadline");
+    const stageMessage = document.getElementById("stageMessage");
+    const detectionStatus = document.getElementById("detectionStatus");
+    const eventStatus = document.getElementById("eventStatus");
+    const trackingStatus = document.getElementById("trackingStatus");
+    const roiStatus = document.getElementById("roiStatus");
+    const roiHint = document.getElementById("roiHint");
+    const madeCount = document.getElementById("madeCount");
+    const attemptCount = document.getElementById("attemptCount");
+    const successRate = document.getElementById("successRate");
+    const rateRing = document.getElementById("rateRing");
+
+    const state = {
+      stream: null,
+      animationFrameId: null,
+      settingRoi: false,
+      roiInputMode: "quick",
+      activePointerId: null,
+      isDragging: false,
+      dragStart: null,
+      dragCurrent: null,
+      activeHandle: null,
+      draftRoi: null,
+      roi: null,
+      savedRoiNormalized: null,
+      savedLegacyRoi: null,
+      savedLegacyBasis: null,
+      lastDetection: null,
+      lastDetectedVideoPoint: null,
+      trail: [],
+      shot: {
+        active: false,
+        aboveSeen: false,
+        throughCenterSeen: false,
+        belowSeen: false,
+        startedAt: 0,
+        lastSeenAt: 0,
+        cooldownUntil: 0
+      },
+      stats: { makes: 0, attempts: 0 }
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function normalizeRect(from, to) {
+      return {
+        x: Math.min(from.x, to.x),
+        y: Math.min(from.y, to.y),
+        width: Math.abs(from.x - to.x),
+        height: Math.abs(from.y - to.y)
+      };
+    }
+
+    function getVideoGeometry() {
+      if (!video.videoWidth || !video.videoHeight) return null;
+      const rect = video.getBoundingClientRect();
+      const scale = Math.max(rect.width / video.videoWidth, rect.height / video.videoHeight);
+      const renderedWidth = video.videoWidth * scale;
+      const renderedHeight = video.videoHeight * scale;
+      return {
+        rect,
+        scale,
+        offsetX: (rect.width - renderedWidth) / 2,
+        offsetY: (rect.height - renderedHeight) / 2
+      };
+    }
+
+    function clampRectToVideo(rect) {
+      if (!video.videoWidth || !video.videoHeight) return null;
+      const width = clamp(rect.width, ROI_MIN_SIZE, video.videoWidth);
+      const height = clamp(rect.height, ROI_MIN_SIZE, video.videoHeight);
+      return {
+        x: clamp(rect.x, 0, video.videoWidth - width),
+        y: clamp(rect.y, 0, video.videoHeight - height),
+        width,
+        height
+      };
+    }
+
+    function displayToVideoRect(displayRect) {
+      const geometry = getVideoGeometry();
+      if (!geometry) return null;
+      return clampRectToVideo({
+        x: (displayRect.x - geometry.offsetX) / geometry.scale,
+        y: (displayRect.y - geometry.offsetY) / geometry.scale,
+        width: displayRect.width / geometry.scale,
+        height: displayRect.height / geometry.scale
+      });
+    }
+
+    function videoToDisplayRect(videoRect) {
+      const geometry = getVideoGeometry();
+      if (!geometry) return null;
+      return {
+        x: videoRect.x * geometry.scale + geometry.offsetX,
+        y: videoRect.y * geometry.scale + geometry.offsetY,
+        width: videoRect.width * geometry.scale,
+        height: videoRect.height * geometry.scale
+      };
+    }
+
+    function displayToVideoPoint(displayX, displayY) {
+      const geometry = getVideoGeometry();
+      if (!geometry) return null;
+      return {
+        x: (displayX - geometry.offsetX) / geometry.scale,
+        y: (displayY - geometry.offsetY) / geometry.scale
+      };
+    }
+
+    function videoToDisplayPoint(videoX, videoY) {
+      const geometry = getVideoGeometry();
+      if (!geometry) return null;
+      return {
+        x: videoX * geometry.scale + geometry.offsetX,
+        y: videoY * geometry.scale + geometry.offsetY
+      };
+    }
+
+    function videoRectToNormalized(rect) {
+      if (!video.videoWidth || !video.videoHeight) return null;
+      return {
+        x: rect.x / video.videoWidth,
+        y: rect.y / video.videoHeight,
+        width: rect.width / video.videoWidth,
+        height: rect.height / video.videoHeight
+      };
+    }
+
+    function normalizedToVideoRect(normalized) {
+      if (!video.videoWidth || !video.videoHeight || !normalized) return null;
+      return clampRectToVideo({
+        x: normalized.x * video.videoWidth,
+        y: normalized.y * video.videoHeight,
+        width: normalized.width * video.videoWidth,
+        height: normalized.height * video.videoHeight
+      });
+    }
+
+    function resizeCanvases() {
+      const rect = videoStage.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      overlayCanvas.width = rect.width * ratio;
+      overlayCanvas.height = rect.height * ratio;
+      overlayCanvas.style.width = `${rect.width}px`;
+      overlayCanvas.style.height = `${rect.height}px`;
+      overlayCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function persistState() {
+      const payload = { stats: state.stats };
+      const normalized = state.roi ? videoRectToNormalized(state.roi) : state.savedRoiNormalized;
+      if (normalized) {
+        payload.roiNormalized = normalized;
+        state.savedRoiNormalized = normalized;
+        if (video.videoWidth && video.videoHeight) {
+          payload.roiBasis = { width: video.videoWidth, height: video.videoHeight };
+        }
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
+
+    function loadSavedState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed?.stats) {
+          state.stats.makes = Number(parsed.stats.makes) || 0;
+          state.stats.attempts = Number(parsed.stats.attempts) || 0;
+        }
+        if (parsed?.roiNormalized) {
+          state.savedRoiNormalized = parsed.roiNormalized;
+        } else if (parsed?.roi) {
+          state.savedLegacyRoi = parsed.roi;
+          state.savedLegacyBasis = parsed.roiBasis || null;
+        }
+      } catch (error) {
+        console.error("Failed to load saved state", error);
+      }
+    }
+
+    function applySavedRoiIfNeeded() {
+      if (state.roi || !video.videoWidth || !video.videoHeight) return;
+      if (state.savedRoiNormalized) {
+        state.roi = normalizedToVideoRect(state.savedRoiNormalized);
+        state.savedRoiNormalized = videoRectToNormalized(state.roi) || state.savedRoiNormalized;
+        updateRoiUi("저장된 림 박스를 해상도 비율 기준으로 복원했습니다.");
+        return;
+      }
+      if (state.savedLegacyRoi && state.savedLegacyBasis) {
+        const normalized = {
+          x: state.savedLegacyRoi.x / state.savedLegacyBasis.width,
+          y: state.savedLegacyRoi.y / state.savedLegacyBasis.height,
+          width: state.savedLegacyRoi.width / state.savedLegacyBasis.width,
+          height: state.savedLegacyRoi.height / state.savedLegacyBasis.height
+        };
+        state.roi = normalizedToVideoRect(normalized);
+        state.savedRoiNormalized = normalized;
+        updateRoiUi("이전 저장 형식의 림 박스를 변환해 불러왔습니다.");
+        return;
+      }
+      if (state.savedLegacyRoi) {
+        state.roi = clampRectToVideo(state.savedLegacyRoi);
+        state.savedRoiNormalized = videoRectToNormalized(state.roi);
+        updateRoiUi("기존 림 박스를 불러왔습니다. 위치를 한 번 확인해 주세요.");
+      }
+    }
+
+    function updateStatsUi() {
+      madeCount.textContent = String(state.stats.makes);
+      attemptCount.textContent = String(state.stats.attempts);
+      const rate = state.stats.attempts === 0 ? 0 : Math.round((state.stats.makes / state.stats.attempts) * 100);
+      successRate.textContent = `${rate}%`;
+      rateRing.style.setProperty("--ring", String(rate));
+    }
+
+    function setCameraUi(isLive) {
+      cameraStatus.textContent = isLive ? "카메라 연결됨" : "카메라 대기";
+      cameraStatus.className = `status-pill ${isLive ? "live" : "idle"}`;
+      startCameraButton.textContent = isLive ? "카메라 종료" : "카메라 시작";
+      setRoiButton.disabled = !isLive;
+    }
+
+    function setStage(message, headline = "실시간 트래킹 준비") {
+      stageHeadline.textContent = headline;
+      stageMessage.textContent = message;
+    }
+
+    function updateRoiUi(message) {
+      if (!state.roi) {
+        roiStatus.textContent = "림 박스가 아직 설정되지 않았습니다.";
+        roiHint.textContent = "빠른 탭으로 대략 위치를 잡고, 필요하면 손잡이나 조정 버튼으로 맞추세요.";
+        return;
+      }
+      roiStatus.textContent =
+        `림 ROI: x ${Math.round(state.roi.x)}, y ${Math.round(state.roi.y)}, ` +
+        `w ${Math.round(state.roi.width)}, h ${Math.round(state.roi.height)}`;
+      roiHint.textContent = message || "지금 위치로 저장되어 있으며, 다시 설정하면 바로 덮어쓸 수 있습니다.";
+    }
+
+    function updateTrackingUi(message) {
+      trackingStatus.textContent = message;
+    }
+
+    function drawRoiBox(rect, preview) {
+      overlayCtx.save();
+      overlayCtx.lineWidth = preview ? 2 : 3;
+      overlayCtx.strokeStyle = preview ? "rgba(255,255,255,0.95)" : "rgba(255,122,47,1)";
+      overlayCtx.fillStyle = preview ? "rgba(255,255,255,0.14)" : "rgba(255,122,47,0.16)";
+      overlayCtx.setLineDash(preview ? [10, 7] : []);
+      overlayCtx.fillRect(rect.x, rect.y, rect.width, rect.height);
+      overlayCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      overlayCtx.restore();
+    }
+
+    function drawRoiHandles(rect) {
+      const handles = [
+        { x: rect.x, y: rect.y },
+        { x: rect.x + rect.width, y: rect.y },
+        { x: rect.x + rect.width, y: rect.y + rect.height },
+        { x: rect.x, y: rect.y + rect.height }
+      ];
+      overlayCtx.save();
+      handles.forEach((handle) => {
+        overlayCtx.beginPath();
+        overlayCtx.fillStyle = "rgba(255,255,255,0.95)";
+        overlayCtx.strokeStyle = "rgba(255,122,47,0.98)";
+        overlayCtx.lineWidth = 3;
+        overlayCtx.arc(handle.x, handle.y, 10, 0, Math.PI * 2);
+        overlayCtx.fill();
+        overlayCtx.stroke();
+      });
+      overlayCtx.restore();
+    }
+
+    function drawBallMarker(point) {
+      overlayCtx.save();
+      overlayCtx.beginPath();
+      overlayCtx.fillStyle = "rgba(88,214,141,0.95)";
+      overlayCtx.strokeStyle = "white";
+      overlayCtx.lineWidth = 3;
+      overlayCtx.arc(point.x, point.y, 10, 0, Math.PI * 2);
+      overlayCtx.fill();
+      overlayCtx.stroke();
+      overlayCtx.restore();
+    }
+
+    function drawOverlay() {
+      const ratio = window.devicePixelRatio || 1;
+      const width = overlayCanvas.width / ratio;
+      const height = overlayCanvas.height / ratio;
+      overlayCtx.clearRect(0, 0, width, height);
+      const activeRect = state.settingRoi ? state.draftRoi || state.roi : state.roi;
+      if (activeRect) {
+        const displayRect = videoToDisplayRect(activeRect);
+        if (displayRect) {
+          drawRoiBox(displayRect, false);
+          if (state.settingRoi) drawRoiHandles(displayRect);
+        }
+      }
+      if (state.isDragging && state.dragStart && state.dragCurrent) {
+        drawRoiBox(normalizeRect(state.dragStart, state.dragCurrent), true);
+      }
+      if (state.lastDetection) drawBallMarker(state.lastDetection);
+      if (state.trail.length > 1) {
+        overlayCtx.save();
+        overlayCtx.beginPath();
+        overlayCtx.lineWidth = 3;
+        overlayCtx.strokeStyle = "rgba(255,255,255,0.72)";
+        state.trail.forEach((point, index) => {
+          if (index === 0) overlayCtx.moveTo(point.x, point.y);
+          else overlayCtx.lineTo(point.x, point.y);
+        });
+        overlayCtx.stroke();
+        overlayCtx.restore();
+      }
+    }
+
+    function updateRoiToolbarUi() {
+      const active = state.settingRoi;
+      const hasDraft = Boolean(state.draftRoi);
+      roiToolbar.classList.toggle("active", active);
+      useQuickModeButton.disabled = !active || state.roiInputMode === "quick";
+      useDragModeButton.disabled = !active || state.roiInputMode === "drag";
+      [nudgeUpButton, nudgeLeftButton, nudgeRightButton, nudgeDownButton, growRoiButton, shrinkRoiButton]
+        .forEach((button) => { button.disabled = !active || !hasDraft; });
+      confirmRoiButton.disabled = !active || !hasDraft;
+
+      if (!active) {
+        roiModeStatus.textContent = "림 박스 설정 모드가 비활성화되어 있습니다.";
+        return;
+      }
+      roiModeStatus.textContent = state.roiInputMode === "quick"
+        ? "림 중심을 한 번 탭하면 기본 박스가 생성됩니다. 손잡이 또는 조정 버튼으로 세부 위치를 맞추세요."
+        : "손가락으로 직접 드래그해 박스를 만들고, 필요하면 손잡이와 조정 버튼으로 보정하세요.";
+    }
+
+    function resetShotState() {
+      state.shot = {
+        active: false,
+        aboveSeen: false,
+        throughCenterSeen: false,
+        belowSeen: false,
+        startedAt: 0,
+        lastSeenAt: 0,
+        cooldownUntil: state.shot.cooldownUntil || 0
+      };
+    }
+
+    function registerAttempt(timestamp) {
+      state.stats.attempts += 1;
+      persistState();
+      updateStatsUi();
+      state.shot.startedAt = timestamp;
+      eventStatus.textContent = "슛 시도 감지";
+    }
+
+    function registerMake() {
+      state.stats.makes += 1;
+      persistState();
+      updateStatsUi();
+      eventStatus.textContent = "성공 판정";
+    }
+
+    function fadeTrail() {
+      if (state.trail.length > 0) state.trail = state.trail.slice(-4);
+    }
+
+    function isBasketballOrange(r, g, b) {
+      const strongRed = r > 135;
+      const greenBand = g > 55 && g < 205;
+      const blueLow = b < 150;
+      const orangeBias = r > g + 12 && g > b + 8;
+      const brightness = r + g + b > 210;
+      return strongRed && greenBand && blueLow && orangeBias && brightness;
+    }
+
+    function detectBall(ctx, roi, frameWidth, frameHeight) {
+      const padX = roi.width * 1.2;
+      const padYTop = roi.height * 2.2;
+      const padYBottom = roi.height * 1.4;
+      const left = Math.max(0, Math.floor(roi.x - padX));
+      const top = Math.max(0, Math.floor(roi.y - padYTop));
+      const right = Math.min(frameWidth, Math.ceil(roi.x + roi.width + padX));
+      const bottom = Math.min(frameHeight, Math.ceil(roi.y + roi.height + padYBottom));
+      const width = right - left;
+      const height = bottom - top;
+      if (width <= 0 || height <= 0) return null;
+      const imageData = ctx.getImageData(left, top, width, height);
+      const data = imageData.data;
+      let count = 0;
+      let sumX = 0;
+      let sumY = 0;
+      let minX = Number.POSITIVE_INFINITY;
+      let minY = Number.POSITIVE_INFINITY;
+      let maxX = Number.NEGATIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+
+      for (let y = 0; y < height; y += 2) {
+        for (let x = 0; x < width; x += 2) {
+          const index = (y * width + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          if (!isBasketballOrange(r, g, b)) continue;
+          const absoluteX = left + x;
+          const absoluteY = top + y;
+          count += 1;
+          sumX += absoluteX;
+          sumY += absoluteY;
+          minX = Math.min(minX, absoluteX);
+          minY = Math.min(minY, absoluteY);
+          maxX = Math.max(maxX, absoluteX);
+          maxY = Math.max(maxY, absoluteY);
+        }
+      }
+
+      if (count < 18) return null;
+      const boxWidth = maxX - minX;
+      const boxHeight = maxY - minY;
+      const aspect = boxHeight === 0 ? 0 : boxWidth / boxHeight;
+      const area = boxWidth * boxHeight;
+      if (boxWidth < 6 || boxHeight < 6 || boxWidth > width * 0.8 || boxHeight > height * 0.8) return null;
+      if (aspect < 0.55 || aspect > 1.5 || area < 45) return null;
+
+      const x = sumX / count;
+      const y = sumY / count;
+      const last = state.lastDetectedVideoPoint;
+      const velocityY = last ? y - last.y : 0;
+      return { x, y, velocityY };
+    }
+    function evaluateShot(ball, roi) {
+      const now = performance.now();
+      if (now < state.shot.cooldownUntil) return;
+
+      const centerX = roi.x + roi.width / 2;
+      const horizontalGate = roi.width * 0.95;
+      const topGate = roi.y - roi.height * 0.55;
+      const centerGate = roi.y + roi.height * 0.45;
+      const bottomGate = roi.y + roi.height * 1.05;
+      const withinHorizontal = Math.abs(ball.x - centerX) <= horizontalGate;
+      const movingDown = ball.velocityY > 0.35;
+
+      if (!state.shot.active && withinHorizontal && ball.y < topGate && movingDown) {
+        resetShotState();
+        state.shot.active = true;
+        state.shot.aboveSeen = true;
+        state.shot.lastSeenAt = now;
+        registerAttempt(now);
+      }
+      if (!state.shot.active) return;
+
+      state.shot.lastSeenAt = now;
+      if (withinHorizontal && ball.y < topGate) state.shot.aboveSeen = true;
+      if (withinHorizontal && ball.y >= centerGate) state.shot.throughCenterSeen = true;
+      if (withinHorizontal && ball.y >= bottomGate) state.shot.belowSeen = true;
+
+      if (state.shot.aboveSeen && state.shot.throughCenterSeen && state.shot.belowSeen) {
+        registerMake();
+        state.shot.cooldownUntil = now + SHOT_COOLDOWN_MS;
+        resetShotState();
+        updateTrackingUi("림 상단에서 하단으로 연속 통과가 확인되어 성공으로 기록했습니다.");
+        return;
+      }
+
+      if (now - state.shot.startedAt > SHOT_TIMEOUT_MS) {
+        state.shot.cooldownUntil = now + 600;
+        resetShotState();
+        eventStatus.textContent = "시도 종료";
+        updateTrackingUi("공이 림 통과 조건을 모두 만족하지 않아 시도만 기록했습니다.");
+      }
+    }
+
+    function expireShotIfNeeded() {
+      const now = performance.now();
+      if (!state.shot.active) return;
+      if (now - state.shot.lastSeenAt > 420) {
+        updateTrackingUi("공이 잠시 가려졌습니다. 다시 보이면 이어서 추적합니다.");
+      }
+      if (now - state.shot.startedAt > SHOT_TIMEOUT_MS) {
+        state.shot.cooldownUntil = now + 600;
+        resetShotState();
+        eventStatus.textContent = "시도 종료";
+      }
+    }
+
+    function analyzeFrame() {
+      if (!state.roi || video.readyState < 2 || state.settingRoi) return;
+      const width = ANALYSIS_WIDTH;
+      const height = Math.max(1, Math.round((video.videoHeight / video.videoWidth) * width));
+      processingCanvas.width = width;
+      processingCanvas.height = height;
+      processingCtx.drawImage(video, 0, 0, width, height);
+
+      const scaleX = width / video.videoWidth;
+      const scaleY = height / video.videoHeight;
+      const roi = {
+        x: state.roi.x * scaleX,
+        y: state.roi.y * scaleY,
+        width: state.roi.width * scaleX,
+        height: state.roi.height * scaleY
+      };
+
+      const candidate = detectBall(processingCtx, roi, width, height);
+      if (!candidate) {
+        detectionStatus.textContent = "공 탐지 중";
+        updateTrackingUi("주황색 공이 림 근처에 들어오면 자동 추적합니다.");
+        expireShotIfNeeded();
+        fadeTrail();
+        state.lastDetection = null;
+        state.lastDetectedVideoPoint = null;
+        return;
+      }
+
+      const videoPoint = { x: candidate.x / scaleX, y: candidate.y / scaleY };
+      state.lastDetectedVideoPoint = { ...videoPoint };
+      const displayPoint = videoToDisplayPoint(videoPoint.x, videoPoint.y);
+      if (!displayPoint) return;
+      state.lastDetection = displayPoint;
+      state.trail.push(displayPoint);
+      state.trail = state.trail.slice(-14);
+      detectionStatus.textContent = `공 탐지: x ${Math.round(videoPoint.x)}, y ${Math.round(videoPoint.y)}`;
+      updateTrackingUi(`현재 공 중심 좌표를 추적 중입니다. 세로 속도 ${candidate.velocityY.toFixed(1)} px/frame`);
+      evaluateShot(candidate, roi);
+    }
+
+    function runAnalysisLoop() {
+      if (state.animationFrameId) cancelAnimationFrame(state.animationFrameId);
+      const loop = () => {
+        analyzeFrame();
+        drawOverlay();
+        state.animationFrameId = requestAnimationFrame(loop);
+      };
+      state.animationFrameId = requestAnimationFrame(loop);
+    }
+
+    async function waitForVideoMetadata() {
+      if (video.readyState >= 1 && video.videoWidth && video.videoHeight) return;
+      await new Promise((resolve) => {
+        video.addEventListener("loadedmetadata", resolve, { once: true });
+      });
+    }
+
+    async function startCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setStage("이 브라우저에서는 카메라 API를 지원하지 않습니다.", "카메라 미지원");
+        detectionStatus.textContent = "지원 안 됨";
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      state.stream = stream;
+      video.srcObject = stream;
+      await waitForVideoMetadata();
+      await video.play();
+      resizeCanvases();
+      applySavedRoiIfNeeded();
+      updateRoiUi();
+      setCameraUi(true);
+      detectionStatus.textContent = state.roi ? "공 탐지 준비" : "림 설정 대기";
+      updateTrackingUi(state.roi ? "공이 림 근처에 들어오면 자동으로 추적합니다." : "림 박스를 먼저 잡아 주세요.");
+      setStage(
+        state.roi
+          ? "저장된 림 박스를 불러왔습니다. 위치가 맞는지 확인한 뒤 바로 촬영을 시작하세요."
+          : "림 박스 설정 버튼을 누른 뒤 빠른 탭이나 드래그로 림 영역을 지정하세요.",
+        state.roi ? "이전 설정 복원" : "실시간 트래킹 준비"
+      );
+      drawOverlay();
+      runAnalysisLoop();
+    }
+
+    function stopCamera() {
+      if (state.animationFrameId) cancelAnimationFrame(state.animationFrameId);
+      state.animationFrameId = null;
+      if (state.stream) state.stream.getTracks().forEach((track) => track.stop());
+      state.stream = null;
+      video.srcObject = null;
+      state.settingRoi = false;
+      state.draftRoi = null;
+      state.activeHandle = null;
+      state.activePointerId = null;
+      state.isDragging = false;
+      state.lastDetection = null;
+      state.lastDetectedVideoPoint = null;
+      state.trail = [];
+      roiToolbar.classList.remove("active");
+      videoStage.classList.remove("setting-roi");
+      overlayCanvas.style.pointerEvents = "none";
+      setCameraUi(false);
+      detectionStatus.textContent = "대기 중";
+      eventStatus.textContent = "아직 없음";
+      updateTrackingUi("카메라를 다시 시작하면 추적을 이어갈 수 있습니다.");
+      setStage("카메라를 시작한 뒤 림 박스를 잡으면 다시 측정을 시작할 수 있습니다.", "카메라 대기");
+      drawOverlay();
+    }
+
+    async function toggleCamera() {
+      if (state.stream) {
+        stopCamera();
+        return;
+      }
+      try {
+        await startCamera();
+      } catch (error) {
+        console.error(error);
+        setStage("브라우저 권한을 허용한 뒤 다시 시도하세요.", "카메라 접근 실패");
+        detectionStatus.textContent = "카메라 오류";
+      }
+    }
+
+    function setRoiInputMode(mode) {
+      state.roiInputMode = mode;
+      updateRoiToolbarUi();
+      setStage(
+        mode === "quick"
+          ? "림 중심을 한 번 눌러 기본 박스를 만든 뒤, 조정 버튼으로 위치를 미세하게 맞추세요."
+          : "손가락으로 림 영역을 드래그해 박스를 만들고, 필요하면 손잡이와 조정 버튼으로 보정하세요.",
+        "림 박스 설정 중"
+      );
+    }
+
+    function beginRoiSelection() {
+      if (!state.stream) return;
+      state.settingRoi = true;
+      state.draftRoi = state.roi ? { ...state.roi } : null;
+      state.activeHandle = null;
+      state.activePointerId = null;
+      state.isDragging = false;
+      state.dragStart = null;
+      state.dragCurrent = null;
+      videoStage.classList.add("setting-roi");
+      overlayCanvas.style.pointerEvents = "auto";
+      setRoiInputMode("quick");
+      detectionStatus.textContent = "림 박스 설정 중";
+      updateRoiToolbarUi();
+      drawOverlay();
+    }
+
+    function endRoiSelection() {
+      state.settingRoi = false;
+      state.activeHandle = null;
+      state.activePointerId = null;
+      state.isDragging = false;
+      state.dragStart = null;
+      state.dragCurrent = null;
+      state.draftRoi = null;
+      videoStage.classList.remove("setting-roi");
+      overlayCanvas.style.pointerEvents = "none";
+      updateRoiToolbarUi();
+      drawOverlay();
+    }
+
+    function getCanvasPoint(event) {
+      const rect = overlayCanvas.getBoundingClientRect();
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    }
+
+    function getHandleAtPoint(point) {
+      if (!state.draftRoi) return null;
+      const rect = videoToDisplayRect(state.draftRoi);
+      if (!rect) return null;
+      const handles = {
+        topLeft: { x: rect.x, y: rect.y },
+        topRight: { x: rect.x + rect.width, y: rect.y },
+        bottomRight: { x: rect.x + rect.width, y: rect.y + rect.height },
+        bottomLeft: { x: rect.x, y: rect.y + rect.height }
+      };
+      return Object.entries(handles).find(([, handle]) => {
+        return Math.hypot(point.x - handle.x, point.y - handle.y) <= HANDLE_RADIUS;
+      })?.[0] || null;
+    }
+    function createQuickRoi(point) {
+      const videoPoint = displayToVideoPoint(point.x, point.y);
+      if (!videoPoint) return;
+      const width = clamp(video.videoWidth * QUICK_ROI_WIDTH_RATIO, 90, video.videoWidth * 0.38);
+      const height = clamp(video.videoHeight * QUICK_ROI_HEIGHT_RATIO, 50, video.videoHeight * 0.22);
+      state.draftRoi = clampRectToVideo({
+        x: videoPoint.x - width / 2,
+        y: videoPoint.y - height / 2,
+        width,
+        height
+      });
+      updateRoiToolbarUi();
+      setStage("기본 림 박스를 만들었습니다. 손잡이 또는 조정 버튼으로 세밀하게 맞춘 뒤 확정하세요.", "림 박스 설정 중");
+      drawOverlay();
+    }
+
+    function updateDraftRoiWithHandle(handle, point) {
+      if (!state.draftRoi) return;
+      const current = videoToDisplayRect(state.draftRoi);
+      if (!current) return;
+
+      let nextRect = current;
+      if (handle === "topLeft") {
+        nextRect = {
+          x: point.x,
+          y: point.y,
+          width: current.x + current.width - point.x,
+          height: current.y + current.height - point.y
+        };
+      } else if (handle === "topRight") {
+        nextRect = {
+          x: current.x,
+          y: point.y,
+          width: point.x - current.x,
+          height: current.y + current.height - point.y
+        };
+      } else if (handle === "bottomRight") {
+        nextRect = {
+          x: current.x,
+          y: current.y,
+          width: point.x - current.x,
+          height: point.y - current.y
+        };
+      } else if (handle === "bottomLeft") {
+        nextRect = {
+          x: point.x,
+          y: current.y,
+          width: current.x + current.width - point.x,
+          height: point.y - current.y
+        };
+      }
+
+      const normalized = normalizeRect(
+        { x: nextRect.x, y: nextRect.y },
+        { x: nextRect.x + nextRect.width, y: nextRect.y + nextRect.height }
+      );
+
+      if (normalized.width < ROI_MIN_SIZE || normalized.height < ROI_MIN_SIZE) return;
+      const videoRect = displayToVideoRect(normalized);
+      if (!videoRect) return;
+      state.draftRoi = videoRect;
+      updateRoiToolbarUi();
+      drawOverlay();
+    }
+
+    function nudgeDraft(dx, dy) {
+      if (!state.draftRoi) return;
+      state.draftRoi = clampRectToVideo({
+        x: state.draftRoi.x + dx,
+        y: state.draftRoi.y + dy,
+        width: state.draftRoi.width,
+        height: state.draftRoi.height
+      });
+      drawOverlay();
+    }
+
+    function scaleDraft(factor) {
+      if (!state.draftRoi) return;
+      const centerX = state.draftRoi.x + state.draftRoi.width / 2;
+      const centerY = state.draftRoi.y + state.draftRoi.height / 2;
+      const nextWidth = state.draftRoi.width * factor;
+      const nextHeight = state.draftRoi.height * factor;
+      state.draftRoi = clampRectToVideo({
+        x: centerX - nextWidth / 2,
+        y: centerY - nextHeight / 2,
+        width: nextWidth,
+        height: nextHeight
+      });
+      drawOverlay();
+    }
+
+    function confirmRoiSelection() {
+      if (!state.draftRoi) {
+        setStage("먼저 빠른 탭 또는 드래그로 림 박스를 만든 뒤 확정해 주세요.", "림 박스 설정 중");
+        return;
+      }
+      state.roi = { ...state.draftRoi };
+      state.savedRoiNormalized = videoRectToNormalized(state.roi);
+      persistState();
+      updateRoiUi("현재 림 박스를 저장했습니다. 다음 실행에서도 해상도 비율 기준으로 복원합니다.");
+      endRoiSelection();
+      detectionStatus.textContent = "공 탐지 준비";
+      updateTrackingUi("공이 림 근처에 들어오면 자동으로 추적합니다.");
+      setStage("림 박스가 설정되었습니다. 자유투를 시작하면 공을 자동 추적합니다.", "트래킹 시작 준비");
+    }
+
+    function cancelRoiSelection() {
+      endRoiSelection();
+      updateRoiUi();
+      detectionStatus.textContent = state.roi ? "공 탐지 준비" : "림 설정 대기";
+      setStage(
+        state.roi
+          ? "기존 림 박스를 유지했습니다."
+          : "림 박스 설정을 취소했습니다. 다시 시도하려면 림 박스 설정 버튼을 누르세요.",
+        state.roi ? "기존 설정 유지" : "설정 취소"
+      );
+    }
+
+    function handlePointerDown(event) {
+      if (!state.settingRoi) return;
+      const point = getCanvasPoint(event);
+      const handle = getHandleAtPoint(point);
+      state.activePointerId = event.pointerId;
+      overlayCanvas.setPointerCapture(event.pointerId);
+
+      if (handle) {
+        state.activeHandle = handle;
+        return;
+      }
+
+      if (state.roiInputMode === "drag") {
+        state.isDragging = true;
+        state.dragStart = point;
+        state.dragCurrent = point;
+        drawOverlay();
+      }
+    }
+
+    function handlePointerMove(event) {
+      if (!state.settingRoi || state.activePointerId !== event.pointerId) return;
+      const point = getCanvasPoint(event);
+
+      if (state.activeHandle) {
+        updateDraftRoiWithHandle(state.activeHandle, point);
+        return;
+      }
+
+      if (state.roiInputMode === "drag" && state.isDragging) {
+        state.dragCurrent = point;
+        drawOverlay();
+      }
+    }
+
+    function handlePointerUp(event) {
+      if (!state.settingRoi || state.activePointerId !== event.pointerId) return;
+      const point = getCanvasPoint(event);
+
+      if (state.activeHandle) {
+        updateDraftRoiWithHandle(state.activeHandle, point);
+        state.activeHandle = null;
+      } else if (state.roiInputMode === "drag" && state.isDragging) {
+        state.dragCurrent = point;
+        const rect = normalizeRect(state.dragStart, state.dragCurrent);
+        state.isDragging = false;
+        if (rect.width >= ROI_MIN_SIZE && rect.height >= ROI_MIN_SIZE) {
+          const videoRect = displayToVideoRect(rect);
+          if (videoRect) {
+            state.draftRoi = videoRect;
+            updateRoiToolbarUi();
+            setStage("드래그로 만든 박스를 확인했습니다. 필요하면 조정한 뒤 확정하세요.", "림 박스 설정 중");
+          }
+        } else {
+          setStage("림 박스가 너무 작습니다. 조금 더 크게 드래그해 주세요.", "림 박스 설정 중");
+        }
+      } else if (state.roiInputMode === "quick") {
+        createQuickRoi(point);
+      }
+
+      if (overlayCanvas.hasPointerCapture(event.pointerId)) {
+        overlayCanvas.releasePointerCapture(event.pointerId);
+      }
+      state.activePointerId = null;
+      drawOverlay();
+    }
+
+    function resetStats() {
+      state.stats = { makes: 0, attempts: 0 };
+      persistState();
+      updateStatsUi();
+      eventStatus.textContent = "기록 초기화";
+      updateTrackingUi("성공, 시도, 성공률 기록을 초기화했습니다.");
+    }
+
+    function cleanupPointerState() {
+      state.activeHandle = null;
+      state.activePointerId = null;
+      state.isDragging = false;
+      state.dragStart = null;
+      state.dragCurrent = null;
+      drawOverlay();
+    }
+
+    startCameraButton.addEventListener("click", toggleCamera);
+    setRoiButton.addEventListener("click", beginRoiSelection);
+    resetStatsButton.addEventListener("click", resetStats);
+    useQuickModeButton.addEventListener("click", () => setRoiInputMode("quick"));
+    useDragModeButton.addEventListener("click", () => setRoiInputMode("drag"));
+    nudgeUpButton.addEventListener("click", () => nudgeDraft(0, -video.videoHeight * NUDGE_STEP_RATIO));
+    nudgeLeftButton.addEventListener("click", () => nudgeDraft(-video.videoWidth * NUDGE_STEP_RATIO, 0));
+    nudgeRightButton.addEventListener("click", () => nudgeDraft(video.videoWidth * NUDGE_STEP_RATIO, 0));
+    nudgeDownButton.addEventListener("click", () => nudgeDraft(0, video.videoHeight * NUDGE_STEP_RATIO));
+    growRoiButton.addEventListener("click", () => scaleDraft(SCALE_STEP));
+    shrinkRoiButton.addEventListener("click", () => scaleDraft(1 / SCALE_STEP));
+    confirmRoiButton.addEventListener("click", confirmRoiSelection);
+    cancelRoiButton.addEventListener("click", cancelRoiSelection);
+    overlayCanvas.addEventListener("pointerdown", handlePointerDown);
+    overlayCanvas.addEventListener("pointermove", handlePointerMove);
+    overlayCanvas.addEventListener("pointerup", handlePointerUp);
+    overlayCanvas.addEventListener("pointercancel", cleanupPointerState);
+    window.addEventListener("resize", () => {
+      resizeCanvases();
+      drawOverlay();
+    });
+    window.addEventListener("pagehide", stopCamera);
+    video.addEventListener("loadedmetadata", () => {
+      resizeCanvases();
+      applySavedRoiIfNeeded();
+      updateRoiUi();
+      drawOverlay();
+    });
+
+    loadSavedState();
+    updateStatsUi();
+    updateRoiUi();
+    updateRoiToolbarUi();
+    setCameraUi(false);
+    setStage("카메라를 시작한 뒤 림 박스를 잡으면 자유투를 자동 카운트할 수 있습니다.", "실시간 트래킹 준비");
+  </script>
+</body>
+</html>
